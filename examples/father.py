@@ -52,16 +52,16 @@ def main():
 
     q = Query(father("john",Y), mother(Z,Y))
     while q.nextSolution():
-        print Y.value, Z.value
+        print(Y.value, Z.value)
         #print X.value, "is the father of", Y.value
         #print Z.value, "is the mother of", Y.value
     q.closeQuery()    # Newer versions of SWI-Prolog do not allow nested queries
 
-    print "\nQuery with strings\n"
+    print("\nQuery with strings\n")
     for s in p.query("father(john,Y),mother(Z,Y)"):
         #print s["X"], "is the father of", s["Y"]
         #print s["Z"], "is the mother of", s["Y"] 
-        print s["Y"], s["Z"]
+        print(s["Y"], s["Z"])
 
     #print "running the query again"
     #q = Query(father(X, Y))

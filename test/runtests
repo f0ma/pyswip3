@@ -2,5 +2,9 @@
 
 export PYTHONPATH=$PYTHONPATH:../
 
-python -m unittest discover
-
+echo 'Load tests'
+python3 test_prolog.py
+echo 'Issues tests'
+python3 test_issues.py
+echo 'Examples tests'
+python3 test_examples.py

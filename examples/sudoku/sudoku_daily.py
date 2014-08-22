@@ -27,8 +27,8 @@
 # and solve it
 
 
-import urllib
-from HTMLParser import HTMLParser, HTMLParseError
+import urllib.request, urllib.parse, urllib.error
+from html.parser import HTMLParser, HTMLParseError
 
 from pyswip.prolog import Prolog
 from pyswip.easy import *
@@ -63,17 +63,17 @@ class DailySudokuPuzzle(HTMLParser):
 
             
 def pretty_print(table):
-    print "".join(["/---", "----"*8, "\\"])
+    print("".join(["/---", "----"*8, "\\"]))
     for row in table:
-        print "".join(["|", "|".join(" %s " % (i or " ") for i in row), "|"])
-    print "".join(["\\---", "----"*8, "/"])        
+        print("".join(["|", "|".join(" %s " % (i or " ") for i in row), "|"]))
+    print("".join(["\\---", "----"*8, "/"]))
 
     
 def get_daily_sudoku(url):
     puzzle = DailySudokuPuzzle()
-    f = urllib.urlopen(url)
+    f = urllib.request.urlopen(url)
     try:
-        puzzle.feed(f.read())
+        puzzle.feed(f.read().decode('cp1251'))
     except HTMLParseError:
         pass
     puzzle = puzzle.puzzle
@@ -94,16 +94,16 @@ def solve(problem):
 if __name__ == "__main__":
     prolog = Prolog()  # having this in `solve` bites! because of __del__
     
-    print "Getting puzzle from:", URL
+    print("Getting puzzle from:", URL)
     
     puzzle = get_daily_sudoku(URL)
-    print "-- PUZZLE --"
+    print("-- PUZZLE --")
     pretty_print(puzzle)    
-    print
-    print " -- SOLUTION --"
+    print()
+    print(" -- SOLUTION --")
     solution = solve(puzzle)
     if solution:
         pretty_print(solution)
     else:
-        print "This puzzle has no solutions [is it valid?]"
+        print("This puzzle has no solutions [is it valid?]")
 

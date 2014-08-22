@@ -32,7 +32,7 @@ N = 3  # Number of disks
 
 def main():
     def notify(t):
-        print "move disk from %s pole to %s pole." % tuple(t)
+        print("move disk from %s pole to %s pole." % tuple(t))
     notify.arity = 1
         
     prolog = Prolog()

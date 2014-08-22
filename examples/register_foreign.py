@@ -36,4 +36,4 @@ def atom_checksum(*a):
 
 p = Prolog()
 registerForeign(atom_checksum, arity=2)
-print list(p.query("X='Python', atom_checksum(X, Y)", catcherrors=False))
+print(list(p.query("X='Python', atom_checksum(X, Y)", catcherrors=False)))
