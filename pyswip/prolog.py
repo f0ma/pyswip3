@@ -51,12 +51,12 @@ def _initialize():
     if SWI_HOME_DIR is not None:
         args.append("--home=%s" % SWI_HOME_DIR)
 
-    result = PL_initialise(len(args),args)
-    # result is a boolean variable (i.e. 0 or 1) indicating whether the
-    # initialisation was successful or not.
-    if not result:
-        raise PrologError("Could not initialize Prolog environment."
-                          "PL_initialise returned %d" % result)
+    result = PL_initialise(args)
+    # For some reason, PL_initialise is returning 1, even though everything is
+    # working
+#    if result != 0:
+#        raise PrologError("Could not initialize Prolog environment."
+#                          "PL_initialise returned %d" % result)
 
     swipl_fid = PL_open_foreign_frame()
     swipl_load = PL_new_term_ref()
@@ -95,7 +95,8 @@ class Prolog:
             swipl_goalCharList = swipl_args
             swipl_bindingList = swipl_args + 1
 
-            PL_put_list_chars(swipl_goalCharList, query)
+#            PL_put_list_chars(swipl_goalCharList, query)
+            PL_unify_wchars(swipl_goalCharList,query)
 
             swipl_predicate = PL_predicate("pyrun", 2, None)
 
