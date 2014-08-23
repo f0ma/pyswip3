@@ -1,3 +1,10 @@
+This fork of PySWIP aims to full unicode/widechar support in python3 <-> swi-prolog communication
+and not intended to save compatibility with python2.
+This is not official python3 version of PySWIP, it is made just for fun.
+But all tests and examples have passed (Python 3.4.0 / SWI-Prolog version 6.6.4 / Ubuntu 14.04 x86).
+
+Level 2 disclaimer (by the  swenzel2):
+
 This fork of PySWIP is a modifiaction to be able to use swi-prolog with python3.
 You are free to use but be aware that this is not meant to be an official python3 version or so...
 The tests ran successfully on my machine (ubuntu 14.04 x64 with python 3.2.5 and 3.4.0).
