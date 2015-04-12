@@ -44,7 +44,7 @@ class Tower:
         """N is the number of disks
         """
         self.N = N
-        self.disks = dict(left=deque(range(N, 0, -1)), center=deque(), right=deque())
+        self.disks = dict(left=deque(list(range(N, 0, -1))), center=deque(), right=deque())
         self.started = False
         self.interactive = interactive
         self.step = 0
@@ -61,20 +61,20 @@ class Tower:
         
     def draw(self):
         disks = self.disks
-        print "\n Step", self.step
+        print("\n Step", self.step)
         for i in range(self.N):
             n = self.N - i - 1
-            print " ",
+            print(" ", end=' ')
             for pole in ["left", "center", "right"]:
                 if len(disks[pole]) - n > 0:
-                    print disks[pole][n],
+                    print(disks[pole][n], end=' ')
                 else:
-                    print " ",
-            print
-        print "-"*9
-        print " ", "L", "C", "R"        
+                    print(" ", end=' ')
+            print()
+        print("-"*9)
+        print(" ", "L", "C", "R")
         if self.interactive:
-            cont = raw_input("Press 'n' to finish: ")
+            cont = input("Press 'n' to finish: ")
             return cont.lower() == "n"
                     
 

@@ -365,115 +365,6 @@ def _fixWindowsPath(dll):
         newPath = pathToDll + ';' + currentWindowsPath
         os.putenv('PATH', newPath)
 
-_stringMap = {}
-def str_to_bytes(string):
-    """
-    Turns a string into a bytes if necessary (i.e. if it is not already a bytes
-    object or None).
-    If string is None, int or c_char_p it will be returned directly.
-
-    :param string: The string that shall be transformed
-    :type string: str, bytes or type(None)
-    :return: Transformed string
-    :rtype: c_char_p compatible object (bytes, c_char_p, int or None)
-    """
-    if string is None or isinstance(string, (int, c_char_p)):
-        return string
-
-    if not isinstance(string, bytes):
-        if string not in _stringMap:
-            _stringMap[string] = string.encode()
-        string = _stringMap[string]
-
-    return string
-
-def list_to_bytes_list(strList):
-    """
-    This function turns an array of strings into a pointer array
-    with pointers pointing to the encodings of those strings
-    Possibly contained bytes are kept as they are.
-
-    :param strList: List of strings that shall be converted
-    :type strList: List of strings
-    :returns: Pointer array with pointers pointing to bytes
-    :raises: TypeError if strList is not list, set or tuple
-    """
-    pList = c_char_p * len(strList)
-
-    # if strList is already a pointerarray or None, there is nothing to do
-    if isinstance(strList, (pList, type(None))):
-        return strList
-
-    if not isinstance(strList, (list, set, tuple)):
-        raise TypeError("strList must be list, set or tuple, not " +
-                str(type(strList)))
-
-    pList = pList()
-    for i, elem in enumerate(strList):
-        pList[i] = str_to_bytes(elem)
-    return pList
-
-# create a decorator that turns the incoming strings into c_char_p compatible
-# butes or pointer arrays
-def check_strings(strings, arrays):
-    """
-    Decorator function which can be used to automatically turn an incoming
-    string into a bytes object and an incoming list to a pointer array if
-    necessary.
-
-    :param strings: Indices of the arguments must be pointers to bytes
-    :type strings: List of integers
-    :param arrays: Indices of the arguments must be arrays of pointers to bytes
-    :type arrays: List of integers
-    """
-
-    # if given a single element, turn it into a list
-    if isinstance(strings, int):
-        strings = [strings]
-    elif strings is None:
-        strings = []
-
-    # check if all entries are integers
-    for i,k in enumerate(strings):
-        if not isinstance(k, int):
-            raise TypeError(('Wrong type for index at {0} '+
-                    'in strings. Must be int, not {1}!').format(i,k))
-
-    # if given a single element, turn it into a list
-    if isinstance(arrays, int):
-        arrays = [arrays]
-    elif arrays is None:
-        arrays = []
-
-    # check if all entries are integers
-    for i,k in enumerate(arrays):
-        if not isinstance(k, int):
-            raise TypeError(('Wrong type for index at {0} '+
-                    'in arrays. Must be int, not {1}!').format(i,k))
-
-    # check if some index occurs in both
-    if set(strings).intersection(arrays):
-        raise ValueError('One or more elements occur in both arrays and ' +
-                ' strings. One parameter cannot be both list and string!')
-
-    # create the checker that will check all arguments given by argsToCheck
-    # and turn them into the right datatype.
-    def checker(func):
-        def check_and_call(*args):
-            args = list(args)
-            for i in strings:
-                arg = args[i]
-                args[i] = str_to_bytes(arg)
-            for i in arrays:
-                arg = args[i]
-                args[i] = list_to_bytes_list(arg)
-
-            return func(*args)
-
-        return check_and_call
-
-    return checker
-
 
 # Find the path and resource file. SWI_HOME_DIR shall be treated as a constant
 # by users of this module
@@ -505,8 +396,8 @@ PL_LIST = 11  # length, arg ...
 PL_CHARS = 12  # const char *
 PL_POINTER = 13  # void *
 #               /* PlArg::PlArg(text, type) */
-#define PL_CODE_LIST     (14)       /* [ascii...] */
-#define PL_CHAR_LIST     (15)       /* [h,e,l,l,o] */
+PL_CODE_LIST  = 14 #       /* [ascii...] */
+PL_CHAR_LIST  = 15 #       /* [h,e,l,l,o] */
 #define PL_BOOL      (16)       /* PL_set_feature() */
 #define PL_FUNCTOR_CHARS (17)       /* PL_unify_term() */
 #define _PL_PREDICATE_INDICATOR (18)    /* predicate_t (Procedure) */
@@ -515,8 +406,8 @@ PL_POINTER = 13  # void *
 #define PL_LONG      (21)       /* long */
 #define PL_DOUBLE    (22)       /* double */
 #define PL_NCHARS    (23)       /* unsigned, const char * */
-#define PL_UTF8_CHARS    (24)       /* const char * */
-#define PL_UTF8_STRING   (25)       /* const char * */
+PL_UTF8_CHARS    = 24 #       /* const char * */
+PL_UTF8_STRING    = 25 #       /* const char * */
 #define PL_INT64     (26)       /* int64_t */
 #define PL_NUTF8_CHARS   (27)       /* unsigned, const char * */
 #define PL_NUTF8_CODES   (29)       /* unsigned, const char * */
@@ -593,7 +484,11 @@ BUF_MALLOC = 0x0200
 
 CVT_EXCEPTION = 0x10000  # throw exception on error
 
-argv = list_to_bytes_list(sys.argv + [None])
+argv = (c_char_p*(len(sys.argv) + 1))()
+for i, arg in enumerate(sys.argv):
+    argv[i] = arg.encode()
+
+argv[-1] = None
 argc = len(sys.argv)
 
 #                  /*******************************
@@ -630,9 +525,17 @@ PL_atomic_t = c_uint_p
 foreign_t = c_uint_p
 pl_wchar_t = c_wchar
 
-PL_initialise = _lib.PL_initialise
-PL_initialise = check_strings(None, 1)(PL_initialise)
+_PL_initialise = _lib.PL_initialise
 #PL_initialise.argtypes = [c_int, c_c??
+
+#wrapper
+def PL_initialise(args):
+
+    plargs = (c_char_p*len(args))()
+    for i in range(len(args)):
+        plargs[i] = args[i].encode()
+
+    return _PL_initialise(len(args),plargs)
 
 PL_open_foreign_frame = _lib.PL_open_foreign_frame
 PL_open_foreign_frame.restype = fid_t
@@ -644,11 +547,12 @@ PL_new_term_refs = _lib.PL_new_term_refs
 PL_new_term_refs.argtypes = [c_int]
 PL_new_term_refs.restype = term_t
 
-PL_chars_to_term = _lib.PL_chars_to_term
-PL_chars_to_term.argtypes = [c_char_p, term_t]
-PL_chars_to_term.restype = c_int
+_PL_chars_to_term = _lib.PL_chars_to_term
+_PL_chars_to_term.argtypes = [c_char_p, term_t]
+_PL_chars_to_term.restype = c_int
 
-PL_chars_to_term = check_strings(0, None)(PL_chars_to_term)
+def PL_chars_to_term(*args):
+    return _PL_chars_to_term(args[0].encode(),args[1])
 
 PL_call = _lib.PL_call
 PL_call.argtypes = [term_t, module_t]
@@ -662,11 +566,12 @@ PL_discard_foreign_frame = _lib.PL_discard_foreign_frame
 PL_discard_foreign_frame.argtypes = [fid_t]
 PL_discard_foreign_frame.restype = None
 
-PL_put_list_chars = _lib.PL_put_list_chars
-PL_put_list_chars.argtypes = [term_t, c_char_p]
-PL_put_list_chars.restype = c_int
+_PL_put_list_chars = _lib.PL_put_list_chars
+_PL_put_list_chars.argtypes = [term_t, c_char_p]
+_PL_put_list_chars.restype = c_int
 
-PL_put_list_chars = check_strings(1, None)(PL_put_list_chars)
+def PL_put_list_chars(*args):
+    return _PL_put_list_chars(args[0],args[1].encode())
 
 #PL_EXPORT(void)                PL_register_atom(atom_t a);
 PL_register_atom = _lib.PL_register_atom
@@ -700,26 +605,45 @@ PL_get_bool.argtypes = [term_t, POINTER(c_int)]
 PL_get_bool.restype = c_int
 
 #PL_EXPORT(int)         PL_get_atom_chars(term_t t, char **a);
-PL_get_atom_chars = _lib.PL_get_atom_chars  # FIXME
-PL_get_atom_chars.argtypes = [term_t, POINTER(c_char_p)]
-PL_get_atom_chars.restype = c_int
+_PL_get_atom_chars = _lib.PL_get_atom_chars  # FIXME
+_PL_get_atom_chars.argtypes = [term_t, POINTER(c_char_p)]
+_PL_get_atom_chars.restype = c_int
 
-PL_get_atom_chars = check_strings(None, 1)(PL_get_atom_chars)
+def PL_get_atom_chars(*args):
+    s = c_char_p()
+    if _PL_get_atom_chars(args[0],byref(s)):
+        return s.value.decode()
+    else:
+        return None
 
 ##define PL_get_string_chars(t, s, l) PL_get_string(t,s,l)
 #                                       /* PL_get_string() is depricated */
 #PL_EXPORT(int)         PL_get_string(term_t t, char **s, size_t *len);
-PL_get_string = _lib.PL_get_string
+_PL_get_string = _lib.PL_get_string
+_PL_get_string_chars = _lib.PL_get_string
+_PL_get_string_chars.argtypes = [term_t, POINTER(c_char_p), c_int_p]
 
-PL_get_string = check_strings(None, 1)(PL_get_string)
+def PL_get_string_chars(*args):
+    slen = c_int()
+    s = c_char_p()
+    if _PL_get_string_chars(args[0], byref(s), byref(slen)):
+        return s.value.decode()
+    else:
+        return None
 
-PL_get_string_chars = PL_get_string
-#PL_get_string_chars.argtypes = [term_t, POINTER(c_char_p), c_int_p]
+#PL_EXPORT(int)        PL_get_chars(term_t t, char **s, unsigned int flags);
+_PL_get_chars = _lib.PL_get_chars  # FIXME:
 
-#PL_EXPORT(int)         PL_get_chars(term_t t, char **s, unsigned int flags);
-PL_get_chars = _lib.PL_get_chars  # FIXME:
+_PL_get_wchars = _lib.PL_get_wchars # (term_t t, size_t *len, pl_wchar_t **s, unsigned flags)
 
-PL_get_chars = check_strings(None, 1)(PL_get_chars)
+def PL_get_chars(*args):
+    slen = c_int()
+    s = create_string_buffer(b"\00"*PYSWIP_MAXSTR)
+    ptr = cast(s, c_wchar_p)
+    if _PL_get_wchars(args[0], byref(slen), byref(ptr), args[1]):
+        return ptr.value
+    else:
+        return None
 
 #PL_EXPORT(int)         PL_get_list_chars(term_t l, char **s,
 #                                         unsigned int flags);
@@ -781,21 +705,44 @@ PL_get_nil.restype = c_int
 #PL_EXPORT(int)         PL_get_term_value(term_t t, term_value_t *v);
 #PL_EXPORT(char *)      PL_quote(int chr, const char *data);
 
-PL_put_atom_chars = _lib.PL_put_atom_chars
-PL_put_atom_chars.argtypes = [term_t, c_char_p]
-PL_put_atom_chars.restype = c_int
 
-PL_put_atom_chars = check_strings(1, None)(PL_put_atom_chars)
+#int PL_unify_wchars(term_t t, int type, size_t len, const pl_wchar_t *s)
+_PL_unify_wchars = _lib.PL_unify_wchars
+_PL_unify_wchars.argtypes = [term_t, c_int, c_size_t, c_wchar_p]
+_PL_unify_wchars.restype = c_int
 
-PL_atom_chars = _lib.PL_atom_chars
-PL_atom_chars.argtypes = [atom_t]
-PL_atom_chars.restype = c_char_p
+def PL_unify_wchars(term,string):
+    return _PL_unify_wchars(term,PL_STRING,len(string),string)
 
-PL_predicate = _lib.PL_predicate
-PL_predicate.argtypes = [c_char_p, c_int, c_char_p]
-PL_predicate.restype = predicate_t
+_PL_put_atom_chars = _lib.PL_put_atom_chars
+_PL_put_atom_chars.argtypes = [term_t, c_char_p]
+_PL_put_atom_chars.restype = c_int
 
-PL_predicate = check_strings([0,2], None)(PL_predicate)
+def PL_put_atom_chars(*args):
+    return _PL_put_atom_chars(args[0],args[1].encode())
+
+_PL_atom_chars = _lib.PL_atom_chars
+_PL_atom_chars.argtypes = [atom_t]
+_PL_atom_chars.restype = c_char_p
+
+_PL_atom_wchars = _lib.PL_atom_wchars
+_PL_atom_wchars.argtypes = [atom_t, POINTER(c_int)]
+_PL_atom_wchars.restype = c_wchar_p
+
+def PL_atom_chars(*args):
+    l = c_int()
+    s = _PL_atom_wchars(args[0],byref(l))
+    return s
+
+_PL_predicate = _lib.PL_predicate
+_PL_predicate.argtypes = [c_char_p, c_int, c_char_p]
+_PL_predicate.restype = predicate_t
+
+def PL_predicate(*args):
+    if args[2] != None:
+        return _PL_predicate(args[0].encode(), args[1], args[2].encode())
+    else:
+        return _PL_predicate(args[0].encode(), args[1], None)
 
 PL_pred = _lib.PL_pred
 PL_pred.argtypes = [functor_t, module_t]
@@ -816,8 +763,6 @@ PL_copy_term_ref.restype = term_t
 PL_get_list = _lib.PL_get_list
 PL_get_list.argtypes = [term_t, term_t, term_t]
 PL_get_list.restype = c_int
-
-PL_get_chars = _lib.PL_get_chars  # FIXME
 
 PL_close_query = _lib.PL_close_query
 PL_close_query.argtypes = [qid_t]
@@ -908,6 +853,14 @@ PL_put_variable.restype = None
 #PL_EXPORT(void)                PL_put_atom(term_t t, atom_t a);
 #PL_EXPORT(void)                PL_put_atom_chars(term_t t, const char *chars);
 #PL_EXPORT(void)                PL_put_string_chars(term_t t, const char *chars);
+
+_PL_put_string_chars = _lib.PL_put_string_chars
+_PL_put_string_chars.argtypes = [term_t,c_char_p]
+_PL_put_string_chars.restype = None
+
+def PL_put_string_chars (*args):
+    _PL_put_string_chars(args[0],args[1].encode())
+
 #PL_EXPORT(void)                PL_put_list_chars(term_t t, const char *chars);
 #PL_EXPORT(void)                PL_put_list_codes(term_t t, const char *chars);
 #PL_EXPORT(void)                PL_put_atom_nchars(term_t t, size_t l, const char *chars);
@@ -962,16 +915,19 @@ PL_exception = _lib.PL_exception
 PL_exception.argtypes = [qid_t]
 PL_exception.restype = term_t
 #
-PL_register_foreign = _lib.PL_register_foreign
-PL_register_foreign = check_strings(0, None)(PL_register_foreign)
+_PL_register_foreign = _lib.PL_register_foreign
+
+def PL_register_foreign(*args):
+    _PL_register_foreign(args[0].encode(), args[1], args[2], args[2])
 
 #
 #PL_EXPORT(atom_t)      PL_new_atom(const char *s);
-PL_new_atom = _lib.PL_new_atom
-PL_new_atom.argtypes = [c_char_p]
-PL_new_atom.restype = atom_t
+_PL_new_atom = _lib.PL_new_atom
+_PL_new_atom.argtypes = [c_char_p]
+_PL_new_atom.restype = atom_t
 
-PL_new_atom = check_strings(0, None)(PL_new_atom)
+def PL_new_atom(*args):
+    return _PL_new_atom(args[0].encode())
 
 #PL_EXPORT(functor_t)   PL_new_functor(atom_t f, int a);
 PL_new_functor = _lib.PL_new_functor

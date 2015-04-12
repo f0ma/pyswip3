@@ -45,7 +45,7 @@ def main():
     PL_call(ta, None)
     
 #    prolog.assertz("animal(gnu, 50)")
-    print list(prolog.query("animal(X,Y)", catcherrors=True))
+    print(list(prolog.query("animal(X,Y)", catcherrors=True)))
 
     
 if __name__ == "__main__":

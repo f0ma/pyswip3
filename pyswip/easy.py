@@ -76,17 +76,11 @@ class Atom(object):
         if not cleaned:
             PL_unregister_atom(self.handle)
 
-    def get_value(self):
-        ret = self.chars
-        if not isinstance(ret, str):
-            ret = ret.decode()
-        return ret
-
-    value = property(get_value)
+    value = property(lambda s:s.chars)
 
     def __str__(self):
         if self.chars is not None:
-            return self.value
+            return self.chars
         else:
             return self.__repr__()
 
@@ -140,15 +134,10 @@ class Variable(object):
             self.chars = name
         if handle:
             self.handle = handle
-            s = create_string_buffer(b"\00"*64)  # FIXME:
-            ptr = cast(s, c_char_p)
-            if PL_get_chars(handle, byref(ptr), CVT_VARIABLE|BUF_RING):
-                self.chars = ptr.value
+            self.chars = PL_get_chars(handle, CVT_VARIABLE|BUF_RING)
         else:
             self.handle = PL_new_term_ref()
             #PL_put_variable(self.handle)
-        if (self.chars is not None) and not isinstance(self.chars, str):
-            self.chars = self.chars.decode()
 
     def unify(self, value):
         if type(value) == str:
@@ -291,9 +280,9 @@ def _unifier(arity, *args):
     #if PL_is_variable(args[0]):
     #    args[0].unify(args[1])
     try:
-        return {args[0].value:args[1].value}
+        return {args[0].chars:args[1].value}
     except AttributeError:
-        return {args[0].value:args[1]}
+        return {args[0].chars:args[1]}
 
 _unify = Functor("=", 2)
 Functor.func[_unify.handle] = _unifier
@@ -332,9 +321,9 @@ def putList(l, ls):
 def getAtomChars(t):
     """If t is an atom, return it as a string, otherwise raise InvalidTypeError.
     """
-    s = c_char_p()
-    if PL_get_atom_chars(t, byref(s)):
-        return s.value
+    s = PL_get_atom_chars(t)
+    if s != None:
+        return s
     else:
         raise InvalidTypeError("atom")
 
@@ -381,10 +370,9 @@ def getFloat(t):
 def getString(t):
     """If t is of type string, return it, otherwise raise InvalidTypeError.
     """
-    slen = c_int()
-    s = c_char_p()
-    if PL_get_string_chars(t, byref(s), byref(slen)):
-        return s.value
+    s = PL_get_string_chars(t)
+    if s != None:
+        return s
     else:
         raise InvalidTypeError("string")
 

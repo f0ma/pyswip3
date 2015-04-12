@@ -233,6 +233,50 @@ class TestIssues(unittest.TestCase):
         self.assertTrue(args[0] == args[2], "The first and last var of "
                                             "f([A, B, A]) should be the same")
         
+    def test_issue_Unicode(self):
+        """
+        Unicode support
+        """
+
+        from pyswip import Prolog, registerForeign
+
+        Prolog.assertz('отец(дима,миша)')
+        Prolog.assertz('отец(дима,настя)')
+        Prolog.assertz('отец(дима,света)')
+        Prolog.assertz('отец(сергей,оля)')
+        Prolog.assertz('отец(сергей,саша)')
+        results = list(Prolog.query('отец(дима,Ребенок)'))
+        self.assertEqual(len(results), 3)
+
+        results = list(Prolog.query('отец(Отец,Ребенок)'))
+        self.assertEqual(len(results), 5)
+
+        callsToHello = []
+        def hello(t):
+            callsToHello.append(t.value)
+        hello.arity = 1
+
+        registerForeign(hello)
+
+        p = Prolog.query("отец(дима,X), hello(X)")
+        result = list(p)
+
+        self.assertEqual(callsToHello, ['миша', 'настя', 'света'])
+
+    def test_issue_Unicode_consult(self):
+        """
+        Unicode support
+        """
+        from pyswip import Prolog
+
+        Prolog.consult('unicode.pl')
+        result = list(Prolog.query('мать(Мать,Ребенок)'))
+        k = len(result)
+        self.assertEqual(k, 2)
+        result = list(Prolog.query('дочь(света,саша)'))
+        self.assertEqual(result, [])
+        result = list(Prolog.query('дочь(света,аня)'))
+        self.assertNotEqual(result, [])
 
 if __name__ == "__main__":
     unittest.main()

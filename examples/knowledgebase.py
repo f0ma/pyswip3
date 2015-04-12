@@ -39,18 +39,18 @@ call(assertz(parent("jane", "bob")), module=test1)
 call(assertz(parent("mike", "bob")), module=test2)
 call(assertz(parent("gina", "bob")), module=test2)
 
-print "knowledgebase test1"
+print("knowledgebase test1")
 
 X = Variable()
 q = Query(parent(X, "bob"), module=test1)
 while q.nextSolution():
-    print X.value
+    print(X.value)
 q.closeQuery()
 
-print "knowledgebase test2"
+print("knowledgebase test2")
 
 q = Query(parent(X, "bob"), module=test2)
 while q.nextSolution():
-    print X.value
+    print(X.value)
 q.closeQuery()
 

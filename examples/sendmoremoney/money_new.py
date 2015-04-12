@@ -45,9 +45,9 @@ def main():
     call(sendmore(X))
     r = X.value
     for i, letter in enumerate(letters):
-        print letter, "=", r[i]
+        print(letter, "=", r[i])
         
-    print "That's all..."
+    print("That's all...")
 
     
 if __name__ == "__main__":

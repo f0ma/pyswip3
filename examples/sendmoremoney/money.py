@@ -41,6 +41,6 @@ prolog.consult("money.pl")
 for result in prolog.query("sendmore(X)"):
     r = result["X"]
     for i, letter in enumerate(letters):
-        print letter, "=", r[i]
+        print(letter, "=", r[i])
 
-print "That's all..."
+print("That's all...")

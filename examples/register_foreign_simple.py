@@ -31,7 +31,7 @@ from pyswip.easy import registerForeign, getAtomChars
 
 
 def hello(t):
-    print "Hello,", t
+    print("Hello,", t)
 hello.arity = 1
 
 
