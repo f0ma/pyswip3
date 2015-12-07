@@ -24,6 +24,7 @@
 
 
 import sys
+from collections import OrderedDict
 
 from pyswip.core import *
 
@@ -114,7 +115,7 @@ class Prolog:
                         try:
                             v = t.value
                         except AttributeError:
-                            v = {}
+                            v = OrderedDict()
                             for r in [x.value for x in t]:
                                 v.update(r)
                         yield v
@@ -155,6 +156,14 @@ class Prolog:
     def consult(cls, filename, catcherrors=False):
         next(cls.query(filename.join(["consult('", "')"]), catcherrors=catcherrors))
     consult = classmethod(consult)
+
+    def load_files(cls, filename, encoding=None ,catcherrors=False):
+        options = []
+        if encoding!= None:
+            options.append('encoding({})'.format(encoding))
+        fixed_filename = filename.replace('\\','/')
+        next(cls.query('load_files("{}",[{}])'.format(fixed_filename, ','.join(options)), catcherrors=catcherrors))
+    load_files = classmethod(load_files)
 
     def query(cls, query, maxresult=-1, catcherrors=True, normalize=True):
         """Run a prolog query and return a generator.

@@ -73,7 +73,7 @@ class Atom(object):
     fromTerm = classmethod(fromTerm)
 
     def __del__(self):
-        if not cleaned:
+        if not cleaned and PL_unregister_atom != None:
             PL_unregister_atom(self.handle)
 
     value = property(lambda s:s.chars)
@@ -289,6 +289,8 @@ Functor.func[_unify.handle] = _unifier
 _not = Functor("not", 1)
 _comma = Functor(",", 2)
 
+_dot = Functor(".", 3)
+Functor.func[_dot.handle] = _dot
 
 def putTerm(term, value):
     if isinstance(value, Term):

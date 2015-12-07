@@ -263,13 +263,13 @@ class TestIssues(unittest.TestCase):
 
         self.assertEqual(callsToHello, ['миша', 'настя', 'света'])
 
-    def test_issue_Unicode_consult(self):
+    def test_issue_Unicode_load_files(self):
         """
-        Unicode support
+        Unicode support load_files with encoding
         """
         from pyswip import Prolog
 
-        Prolog.consult('unicode.pl')
+        Prolog.load_files('unicode.pl',encoding='utf8')
         result = list(Prolog.query('мать(Мать,Ребенок)'))
         k = len(result)
         self.assertEqual(k, 2)
@@ -277,6 +277,7 @@ class TestIssues(unittest.TestCase):
         self.assertEqual(result, [])
         result = list(Prolog.query('дочь(света,аня)'))
         self.assertNotEqual(result, [])
+
 
 if __name__ == "__main__":
     unittest.main()
