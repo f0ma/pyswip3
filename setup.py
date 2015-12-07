@@ -29,18 +29,59 @@ import sys
 import os
 import os.path
 from distutils.core import setup
+from setuptools.command.install import install
+from setuptools.command.develop import develop
 
 
-setup(name="pyswip",
+def check_reqs(command_subclass):
+    """Check requirements."""
+    orig_run = command_subclass.run
+    def modified_run(self):
+        try:
+            from pyswip.prolog import Prolog
+            p = Prolog()
+            p.assertz('setup_prolog(1)')
+            list(p.query('setup_prolog(1)'))
+        except:
+            print('----------------------')
+            print('There is a problem with SWI-Prolog Installation')
+            print('Please, check if you have it installed with shared Libraries')
+            print('Installation guide: https://github.com/yuce/pyswip/blob/master/INSTALL')
+            print('----------------------')
+
+        orig_run(self)
+
+    command_subclass.run = modified_run
+    return command_subclass
+
+
+@check_reqs
+class CustomDevelopCommand(develop):
+    action = 'develop'
+
+
+@check_reqs
+class CustomInstallCommand(install):
+    action = 'install'
+
+
+setup(name="pyswip_alt",
       version="0.2.3",
-      url="http://code.google.com/p/pyswip/",
-      download_url="http://code.google.com/p/pyswip/downloads/list",
+      url="https://github.com/JoaoFelipe/pyswip/",
       author="Yuce Tekol",
       author_email="yucetekol@gmail.com",
       description="PySWIP enables querying SWI-Prolog in your Python programs.",
       long_description="""
-PySWIP 0.2.3
-============
+PySWIP Alt 0.2.3
+================
+
+
+Disclaimer:
+
+This is a fork from https://github.com/yuce/pyswip
+Its only purpose is to publish the most updated version at pypi
+
+-----------------
 
 PySWIP is a Python - SWI-Prolog bridge enabling to query SWI-Prolog
 in your Python programs. It features an (incomplete) SWI-Prolog foreign
@@ -87,7 +128,7 @@ Prolog predicate through SWI-Prolog's foreign language interface.
 
 Example (Foreign Functions):
 ----------------------------
-    
+
     from pyswip import Prolog, registerForeign
 
     def hello(t):
@@ -98,7 +139,7 @@ Example (Foreign Functions):
 
     prolog = Prolog()
     prolog.assertz("father(michael,john)")
-    prolog.assertz("father(michael,gina)")    
+    prolog.assertz("father(michael,gina)")
     list(prolog.query("father(michael,X), hello(X)"))
 
 Outputs:
@@ -134,11 +175,14 @@ Outputs:
                    'Development Status :: 3 - Alpha',
                    'Intended Audience :: Developers',
                    'Intended Audience :: Science/Research',
-                   'License :: OSI Approved :: The MIT License (MIT)',
                    'Operating System :: OS Independent',
                    'Programming Language :: Python',
                    'Topic :: Scientific/Engineering :: Artificial Intelligence',
                    'Topic :: Software Development :: Libraries :: Python Modules'
                    ],
+      cmdclass={
+        'install': CustomInstallCommand,
+        'develop': CustomDevelopCommand,
+      },
     )
 
