@@ -203,7 +203,7 @@ def _findSwiplWin():
         ret = ret[0].splitlines()
         ret = [line for line in ret if len(line) > 0]
         pattern = re.compile('[^h]*home[^R]*REG_SZ( |\t)*(.*)$')
-        match = pattern.match(ret[-1])
+        match = pattern.match(ret[-1].decode())
         if match is not None:
             path = match.group(2)
 
@@ -914,11 +914,12 @@ PL_cons_list.restype = None
 PL_exception = _lib.PL_exception
 PL_exception.argtypes = [qid_t]
 PL_exception.restype = term_t
-#
+
+# int PL_register_foreign(const char *name, int arity, foreign_t (*function)(), int flags, ...)
 _PL_register_foreign = _lib.PL_register_foreign
 
 def PL_register_foreign(*args):
-    _PL_register_foreign(args[0].encode(), args[1], args[2], args[2])
+    _PL_register_foreign(args[0].encode(), int(args[1]), args[2], int(args[3]))
 
 #
 #PL_EXPORT(atom_t)      PL_new_atom(const char *s);
