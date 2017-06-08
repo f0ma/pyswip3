@@ -141,7 +141,7 @@ class Variable(object):
 
     def unify(self, value):
         if type(value) == str:
-            fun = PL_unify_atom_chars
+            fun = PL_unify_wchars
         elif type(value) == int:
             fun = PL_unify_integer
         elif type(value) == bool:
@@ -372,7 +372,7 @@ def getFloat(t):
 def getString(t):
     """If t is of type string, return it, otherwise raise InvalidTypeError.
     """
-    s = PL_get_string_chars(t)
+    s = PL_get_chars(t,CVT_STRING)
     if s != None:
         return s
     else:

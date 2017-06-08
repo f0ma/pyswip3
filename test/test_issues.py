@@ -277,7 +277,19 @@ class TestIssues(unittest.TestCase):
         self.assertEqual(result, [])
         result = list(Prolog.query('дочь(света,аня)'))
         self.assertNotEqual(result, [])
+        
+    def test_issue_Unification_Unicode(self):
+        
+        from pyswip import Prolog, registerForeign, Atom
+        from collections import OrderedDict
 
+        def py_read(*a):
+            a[0].unify('привет')
+            return True
+        
+        registerForeign(py_read, arity=1)
+        result = list(Prolog.query('py_read(X)'))
+        self.assertEqual(result[0]['X'],'привет')
 
 if __name__ == "__main__":
     unittest.main()
